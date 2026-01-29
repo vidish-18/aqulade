@@ -12,11 +12,34 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@theme {
+  --font-ahsing: 'Ahsing';
+  --font-horizon: 'Horizon';
+  --font-horizon-outline: 'Horizon-Outline'
+  --aqulade-gray: rgb(30,30,30)
+  --aqulade-black: rgb(0,0,0)
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+}
+
+@font-face {
+  font-family: 'Ahsing';
+  src: url('/fonts/ahsing-font.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Horizon';
+  src: url('/fonts/horizon-font.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Horizon-Outline';
+  src: url('/fonts/horizon-out-font.otf') format('opentype');
 }
 
 body {
