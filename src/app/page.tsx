@@ -1,11 +1,20 @@
 // Using client cuz the site uses 3D components which needs mouse inputs from the user
 'use client'
 
+import { useState } from "react";
+
+import { supabase } from "./lib/supabase";
+
 // Importing libraries and tools which help with the 3D rendering 
 import { motion, useMotionTemplate, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 // The home function which returns the actual page elements and code of JSX and CSS
 export default function Home() {
+
+  // Variables to store whether the card is flipped and if the email is given or not
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle");
 
   // Calculations to know where exactly the mouse is hovering and adding 3D interactivity
   const x = useMotionValue(0)
@@ -37,9 +46,28 @@ export default function Home() {
     glowY.set(mouseYPos)
   }
 
+  // Function that handles the email receiving and sending to supabase 
+  const handleSubscribe = async () => {
+    if (!email) return;
+
+    setStatus("loading");
+
+    const { error } = await supabase.from("subscribers").insert([{
+      email: email,
+    }]);
+
+    if (error) {
+      console.error(error);
+      setStatus("error");
+    } else {
+      setStatus("success");
+      setEmail("");
+    }
+  }
+
   // The JSX (HTML) code being sent to the user 
   return (
-    <main className="min-h-screen bg-linear-to-r from-[#000000] to-[#050505] flex items-center justify-center p-4 perspective-distant overflow-hidden">
+    <main className="min-h-screen bg-linear-to-r from-[#000000] to-[#050505] flex items-center justify-center p-4 perspective-distant">
 
       {/* The Card Container */}
       <motion.div
@@ -50,42 +78,120 @@ export default function Home() {
 
         // Styling applied to the card for the way it looks and to make it a 3D component
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-        className="w-full max-w-2xl border border-zinc-400 bg-linear-to-r from-[#000000] to-[#303030] rounded-2xl p-12 flex flex-col items-center text-center space-y-8 will-change-transform relative group">
+        className="w-full max-w-2xl aspect-4/3 relative group perspective-1000">
 
+        {/* --- THE FLIPPER WRAPPER (Spin Engine) --- */}
         <motion.div
-          className="pointer-events-none absolute w-full h-full inset-px opacity-0 rounded-2xl group-hover:opacity-100 transition-opacity duration-500"
-          style={{ background: useMotionTemplate`radial-gradient(500px circle at ${glowX}px ${glowY}px, rgba(75,75,255,0.2), transparent 70%)` }}
-        ></motion.div>
+          initial={false}
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+          style={{ transformStyle: "preserve-3d" }}
+          className="relative w-full h-full">
 
-        <div className="relative z-10 flex flex-col items-center text-center space-y-8" style={{ transformStyle: "preserve-3d" }}>
-          {/* The Logo */}
-          {/* This is the actual aqulade logo */}
-          <div style={{ transform: "translateZ(100px)", transformStyle: "preserve-3d" }}>
-            <h2 className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-5xl font-ahsing tracking-tight lowercase">
-              aqulade
+          {/* --- FRONT FACE (Your Original Design) --- */}
+          <div
+            className="absolute inset-0 backface-hidden border border-zinc-600 bg-linear-to-r from-[#000000] to-[#202020] rounded-2xl p-12 flex flex-col items-center justify-center text-center space-y-8"
+            style={{ backfaceVisibility: "hidden", transformStyle: "preserve-3d" }}
+          >
+            {/* The Glow Effect */}
+            <motion.div
+              className="pointer-events-none absolute w-full h-full inset-px opacity-0 rounded-2xl group-hover:opacity-100 transition-opacity duration-500"
+              style={{ background: useMotionTemplate`radial-gradient(500px circle at ${glowX}px ${glowY}px, rgba(0,0,255,0.3), transparent 80%)` }}
+            ></motion.div>
+
+            {/* Logo & Text */}
+            <div className="relative z-10 flex flex-col items-center text-center space-y-8" style={{ transformStyle: "preserve-3d" }}>
+              <div style={{ transform: "translateZ(100px)" }}>
+                <h2 className="text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-5xl font-ahsing tracking-tight lowercase">
+                  aqulade
+                </h2>
+              </div>
+
+              <h1 className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] text-7xl font-horizon leading-none">
+                Coming <br />Soon
+              </h1>
+
+              <p className="text-lg text-zinc-400 font-light max-w-xs">
+                Because everyone deserves to wear their feelings.
+              </p>
+
+              {/* THE TRIGGER BUTTON */}
+              <div className="group relative" style={{ transform: "translateZ(100px)" }}>
+                <button
+                  onClick={() => setIsFlipped(true)}
+                  className="bg-white border border-zinc-600 group relative text-black px-10 py-3 font-medium text-sm rounded-full hover:bg-black hover:text-white transition-colors uppercase tracking-widest">
+                  Notify Me
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+          {/* --- BACK FACE (The New Form) --- */}
+          <div
+            className="absolute inset-0 backface-hidden border border-zinc-600 bg-linear-to-r from-[#000000] to-[#202020] rounded-2xl p-12 flex flex-col items-center justify-center text-center space-y-8"
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", transformStyle: "preserve-3d" }}
+          >
+            <motion.div
+              className="pointer-events-none absolute w-full h-full inset-px opacity-0 rounded-2xl group-hover:opacity-100 transition-opacity duration-500"
+              style={{ background: useMotionTemplate`radial-gradient(500px circle at ${glowX}px ${glowY}px, rgba(255,0,0,0.3), transparent 80%)` }}
+            ></motion.div>
+
+            <h2 className="text-white text-5xl font-horizon tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] ">
+              JOIN THE REVOLUTION
             </h2>
-          </div>
 
-          {/* The Main Text */}
-          {/* This is the coming soon text */}
-          <h1 className="text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.8)] text-7xl font-horizon leading-none">
-            Coming <br />Soon
-          </h1>
+            <div className="w-full max-w-md space-y-6 relative z-10" style={{ transform: "translateZ(70px)" }}>
 
-          {/* The Tag Line */}
-          {/* This line will prolly be changed soon */}
-          <p className="text-lg text-zinc-400 font-light max-w-xs">
-            Because everyone deserves to wear thier feelings.
-          </p>
+              {/* Email Input */}
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="enter your email <3"
+                disabled={status === "loading" || status === "success"}
+                className="w-full bg-black/50 border border-zinc-700 text-white px-6 py-4 rounded-4xl focus:outline-none focus:border-blue-500 transition-all text-center placeholder:text-zinc-600"
+              />
 
-          {/* The Button */}
-          {/* The button which will help you notify and give your emails to us which we will use very kindly to help you (or will we?) */}
-          <div className="space-y-2" style={{ transform: "translateZ(100px)", transformStyle: "preserve-3d" }}>
-            <button className="bg-white text-black px-10 py-3 font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors uppercase tracking-widest">
-              Notify Me
+              {/* Wired Submit Button */}
+              <button
+                onClick={handleSubscribe}
+                disabled={status === "loading" || status === "success"}
+                className="w-full bg-black text-white border font-mono border-white px-6 py-4 rounded-4xl tracking-widest uppercase hover:bg-green-600 hover:text-black transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                {status === "loading" ? "Aqulading..." : status === "success" ? (
+
+                  // --- THE VICTORY TEXT (Minimalist) ---
+                  // Exact same style as error, just Green and centered
+                  <div className="py-4">
+                    <p className="text-green-500 font-mono text-sm tracking-widest uppercase animate-pulse">
+                      thank you.
+                    </p>
+                    <p className="text-zinc-200 font-mono text-xs mt-2 lowercase">
+                      you are an aqulade member now.
+                    </p>
+                  </div>
+
+                ) : "Count Me In!"}
+              </button>
+
+            </div>
+
+            {/* Back Button */}
+            <button
+              onClick={() => setIsFlipped(false)}
+              className="text-zinc-500 text-xs hover:text-white mt-4 uppercase tracking-widest transition-colors">
+              Go Back
             </button>
+
+            {/* Error Message */}
+            {status === "error" && (
+              <p className="text-red-500 text-xs mt-2 font-mono">
+                Something went wrong. Please try again.
+              </p>
+            )}
           </div>
-        </div>
+
+        </motion.div>
 
       </motion.div>
 
